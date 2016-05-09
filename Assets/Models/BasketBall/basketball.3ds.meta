@@ -1,0 +1,187 @@
+fileFormatVersion: 2
+guid: 2d2bdf0c5eda9034fa405e66aaaefffb
+timeCreated: 1462760566
+licenseType: Free
+ModelImporter:
+  serializedVersion: 19
+  fileIDToRecycleName:
+    100000: Ambient
+    100002: basket_bal
+    100004: //RootNode
+    100006: Camera
+    100008: Camera.target
+    100010: Cloner
+    100012: Darker_Sky
+    100014: Don_t_dele
+    100016: Enviroment
+    100018: Lensflare_
+    100020: Light
+    100022: Moon
+    100024: Moon_Light
+    100026: Plane_0
+    100028: Plane_1
+    100030: Plane_2
+    100032: Plane_3
+    100034: Plane_4
+    100036: Plane_5
+    100038: Plane_6
+    100040: Plane_7
+    100042: Plane_8
+    100044: Shadow_Pla
+    100046: Sky_Dome
+    100048: Sky_Null
+    100050: Sun
+    100052: Sun_light
+    100054: Texture_ge
+    400000: Ambient
+    400002: basket_bal
+    400004: //RootNode
+    400006: Camera
+    400008: Camera.target
+    400010: Cloner
+    400012: Darker_Sky
+    400014: Don_t_dele
+    400016: Enviroment
+    400018: Lensflare_
+    400020: Light
+    400022: Moon
+    400024: Moon_Light
+    400026: Plane_0
+    400028: Plane_1
+    400030: Plane_2
+    400032: Plane_3
+    400034: Plane_4
+    400036: Plane_5
+    400038: Plane_6
+    400040: Plane_7
+    400042: Plane_8
+    400044: Shadow_Pla
+    400046: Sky_Dome
+    400048: Sky_Null
+    400050: Sun
+    400052: Sun_light
+    400054: Texture_ge
+    2300000: Ambient
+    2300002: basket_bal
+    2300004: Cloner
+    2300006: Darker_Sky
+    2300008: Don_t_dele
+    2300010: Enviroment
+    2300012: Moon
+    2300014: Plane_0
+    2300016: Plane_1
+    2300018: Plane_2
+    2300020: Plane_3
+    2300022: Plane_4
+    2300024: Plane_5
+    2300026: Plane_6
+    2300028: Plane_7
+    2300030: Plane_8
+    2300032: Shadow_Pla
+    2300034: Sky_Null
+    2300036: Sun
+    2300038: Texture_ge
+    3300000: Ambient
+    3300002: basket_bal
+    3300004: Cloner
+    3300006: Darker_Sky
+    3300008: Don_t_dele
+    3300010: Enviroment
+    3300012: Moon
+    3300014: Plane_0
+    3300016: Plane_1
+    3300018: Plane_2
+    3300020: Plane_3
+    3300022: Plane_4
+    3300024: Plane_5
+    3300026: Plane_6
+    3300028: Plane_7
+    3300030: Plane_8
+    3300032: Shadow_Pla
+    3300034: Sky_Null
+    3300036: Sun
+    3300038: Texture_ge
+    4300000: Enviroment
+    4300002: basket_bal
+    4300004: Texture_ge
+    4300006: Don_t_dele
+    4300008: Ambient
+    4300010: Cloner
+    4300012: Plane_0
+    4300014: Plane_1
+    4300016: Plane_2
+    4300018: Plane_3
+    4300020: Plane_4
+    4300022: Plane_5
+    4300024: Plane_6
+    4300026: Plane_7
+    4300028: Plane_8
+    4300030: Darker_Sky
+    4300032: Sky_Null
+    4300034: Sun
+    4300036: Moon
+    4300038: Shadow_Pla
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleRotations: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 0.008
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
