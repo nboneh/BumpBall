@@ -19,9 +19,9 @@ public class Ball : MonoBehaviour {
         Rigidbody rb = GetComponent<Rigidbody>();
         source = GetComponent<AudioSource>();
         stretchFactor = 0.0f;
-        if (this.gameObject.name.Equals("Sphere"))
+        if (this.gameObject.name.Equals("Tennisball"))
         {
-            rb.velocity = new Vector3(6, 0, 6);
+            rb.velocity = new Vector3(-6, 0, 6);
         } else if (this.gameObject.name.Equals("basket_bal"))
         {
             rb.velocity = new Vector3(-6, 0, 6);
@@ -83,7 +83,15 @@ public class Ball : MonoBehaviour {
 
     }
 
-
+    public void updateAcceleration(Vector3 acceleration, float t)
+    {
+        Rigidbody rb = GetComponent<Rigidbody>();
+        print(acceleration.magnitude);
+        if(rb.velocity.magnitude < 7.0f)
+            rb.velocity = new Vector3(acceleration.x , rb.velocity.y , acceleration.z);
+        else
+            rb.velocity = new Vector3(rb.velocity.x + (acceleration.x * t), rb.velocity.y ,rb.velocity.z + (acceleration.z * t));
+    }
     void OnCollisionEnter(Collision collision)
     {
 
@@ -98,6 +106,7 @@ public class Ball : MonoBehaviour {
         ContactPoint contact = collision.contacts[0];
         Quaternion rot = Quaternion.FromToRotation(Vector3.forward, contact.normal);
         Vector3 pos = contact.point;
+        pos.y = pos.y + radius / 2.0f;
         ParticleSystem particleEffect = (ParticleSystem)Instantiate(particleCollision, pos, rot);
         particleEffect.startSize = collision.relativeVelocity.magnitude/10.0f;
         particleEffect.startSpeed = collision.relativeVelocity.magnitude / 10.0f;
