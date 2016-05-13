@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.IO;
+using UnityEngine;
 using System.Collections;
 
 public class GameDriver : MonoBehaviour {
@@ -11,9 +12,19 @@ public class GameDriver : MonoBehaviour {
     float alpha = 0.0f;
     float score = 0;
 
+    int finalscore = 0;
+
+    int localHighScore = 0;
+
     public Control controller;
     public Ball playerBall;
     public GameObject plane;
+
+    TextAsset localScoreText;
+    string localScoreFileName = "score.txt";
+
+    Color playerColor = new Color(.7f, 0, 0);
+    Color enemyColor = new Color(0, 0, .7f);
 
     bool drawScoreIntro = false;
 
@@ -21,6 +32,10 @@ public class GameDriver : MonoBehaviour {
     float maxX;
     float minZ;
     float maxZ;
+
+    public Material[] planeMaterials;
+    public Ball[] balls;
+    
 
     void Start()
     {
@@ -32,6 +47,14 @@ public class GameDriver : MonoBehaviour {
         maxX = bounds.max.x;
         minZ = bounds.min.z;
         maxZ = bounds.max.z;
+
+        if (File.Exists( localScoreFileName))
+        {
+            StreamReader reader = new StreamReader(localScoreFileName); // Does this work?
+            localHighScore = int.Parse(reader.ReadLine());
+            reader.Close();
+        }
+        playerBall.GetComponent<Renderer>().material.color = playerColor;
     }
     void OnGUI()
     {
@@ -72,6 +95,7 @@ public class GameDriver : MonoBehaviour {
         {
             if(currentState == GameState.Intro)
             {
+                score = 0;
                 setState(GameState.Playing);
             }
         }
@@ -95,7 +119,10 @@ public class GameDriver : MonoBehaviour {
             if (!isTouchingPlane(playerBall))
             {
                 controller.turnOff();
+                finalscore = (int)score;
                 drawScoreIntro = true;
+                CheckLocalHighScore();
+                Reset();
                 setState(GameState.Intro);
             }
         }
@@ -121,14 +148,14 @@ public class GameDriver : MonoBehaviour {
         textStyle.alignment = TextAnchor.UpperCenter;
         textStyle.fontSize = 26;
         textStyle.fontStyle = FontStyle.Bold;
-        GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 150, 600, 50), "Help the redball stay inside the screen", textStyle);
-        GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 100, 600, 50), "Use a joystick by placing your finger anywhere", textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 150, 600, 50), "Help the redball stay inside the screen", textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 100, 600, 50), "Use a joystick by placing your finger anywhere", textStyle);
         if (drawScoreIntro)
         {
-            GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 +50, 600, 50), "Score: " + (int)score, textStyle);
+            DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 +50, 600, 50), "Score: " + (int)finalscore, textStyle);
         }
-        GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 100, 600, 50), "Local Highscore: 0", textStyle);
-        GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 150, 600, 50), "Online Highscore: 500 Mr. Krabs", textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 100, 600, 50), "Local Highscore: " + localHighScore, textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 150, 600, 50), "Online Highscore: 500 Mr. Krabs", textStyle);
     }
 
     void drawScore()
@@ -137,7 +164,7 @@ public class GameDriver : MonoBehaviour {
         textStyle.alignment = TextAnchor.MiddleLeft;
         textStyle.fontSize = 26;
         textStyle.fontStyle = FontStyle.Bold;
-        GUI.Label(new Rect(20, 20, 600, 50), "Score: " + (int)score, textStyle);
+        DrawOutline(new Rect(20, 20, 600, 50), "Score: " + (int)score, textStyle);
     }
 
     void drawGameOver()
@@ -154,7 +181,7 @@ public class GameDriver : MonoBehaviour {
         float ballMaxZ = bounds.max.z;
 
         float diameter = ballMaxX - ballMinX;
-     
+
         return (ballMinZ + diameter) >= minZ && (ballMinX + diameter) >= minX && (ballMaxX - diameter) <= maxX && (ballMaxZ - diameter) <= maxZ;
     }
     void updatePlaying(float t)
@@ -162,4 +189,51 @@ public class GameDriver : MonoBehaviour {
         score += t * 4;
     }
 
+
+    void CheckLocalHighScore()
+    {
+        if (finalscore > localHighScore)
+        {
+            localHighScore = finalscore;
+            StreamWriter writer = new StreamWriter( localScoreFileName); // Does this work?
+            writer.Write(finalscore);
+            writer.Close();
+        }
+    }
+
+    void Reset()
+    {
+        int rand = Random.Range(0, planeMaterials.Length);
+        plane.GetComponent<Renderer>().material = planeMaterials[rand];
+
+        Destroy(playerBall.gameObject);
+        playerBall = Instantiate(balls[rand]);
+        if(rand == 4)
+             playerBall.GetComponent<Renderer>().materials[1].color = playerColor;
+        else
+            playerBall.GetComponent<Renderer>().material.color = playerColor;
+        playerBall.transform.position = new Vector3(0, 1, 0);
+
+    }
+
+    public static void DrawOutline(Rect position,  string text, GUIStyle style)
+    {
+        var outColor = Color.black;
+        var backupStyle = style;
+        var oldColor = style.normal.textColor;
+        style.normal.textColor = outColor;
+        position.x--;
+        GUI.Label(position, text, style);
+        position.x += 2;
+        GUI.Label(position, text, style);
+        position.x--;
+        position.y--;
+        GUI.Label(position, text, style);
+        position.y += 2;
+        GUI.Label(position, text, style);
+        position.y--;
+        style.normal.textColor = oldColor;
+        GUI.Label(position, text, style);
+        style = backupStyle;
+    }
 }

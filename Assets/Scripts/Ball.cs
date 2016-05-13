@@ -111,6 +111,6 @@ public class Ball : MonoBehaviour {
         source.PlayOneShot(bouncesound, (collision.relativeVelocity.magnitude * collision.relativeVelocity.magnitude) / 1000.0f);
         stretchFactor = 4.0f;
 
-        Destroy(particleEffect, particleCollision.duration);
+        Destroy(particleEffect.gameObject, particleCollision.duration);
     }
 }
