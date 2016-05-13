@@ -3,7 +3,7 @@ using System.Collections;
 
 public class GameDriver : MonoBehaviour {
 
-    enum GameState { Intro, Playing, GameOver, Highscore, NoState };
+    enum GameState { Intro, Playing, Highscore, NoState };
     GameState currentState;
     GameState prevState;
     GUIStyle textStyle;
@@ -13,11 +13,25 @@ public class GameDriver : MonoBehaviour {
 
     public Control controller;
     public Ball playerBall;
+    public GameObject plane;
+
+    bool drawScoreIntro = false;
+
+    float minX;
+    float maxX;
+    float minZ;
+    float maxZ;
 
     void Start()
     {
         currentState = GameState.Intro;
         prevState = GameState.NoState;
+      
+        Bounds bounds = plane.GetComponent<Renderer>().bounds;
+        minX = bounds.min.x;
+        maxX = bounds.max.x;
+        minZ = bounds.min.z;
+        maxZ = bounds.max.z;
     }
     void OnGUI()
     {
@@ -78,6 +92,12 @@ public class GameDriver : MonoBehaviour {
         {
             updatePlaying(t);
             playerBall.updateAcceleration(controller.getAcceleration(), t);
+            if (!isTouchingPlane(playerBall))
+            {
+                controller.turnOff();
+                drawScoreIntro = true;
+                setState(GameState.Intro);
+            }
         }
     } 
 
@@ -103,8 +123,12 @@ public class GameDriver : MonoBehaviour {
         textStyle.fontStyle = FontStyle.Bold;
         GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 150, 600, 50), "Help the redball stay inside the screen", textStyle);
         GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 100, 600, 50), "Use a joystick by placing your finger anywhere", textStyle);
-        GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 50, 600, 50), "Local Highscore: 0", textStyle);
-        GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 100, 600, 50), "Online Highscore: 500 Mr. Krabs", textStyle);
+        if (drawScoreIntro)
+        {
+            GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 +50, 600, 50), "Score: " + (int)score, textStyle);
+        }
+        GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 100, 600, 50), "Local Highscore: 0", textStyle);
+        GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 150, 600, 50), "Online Highscore: 500 Mr. Krabs", textStyle);
     }
 
     void drawScore()
@@ -116,6 +140,23 @@ public class GameDriver : MonoBehaviour {
         GUI.Label(new Rect(20, 20, 600, 50), "Score: " + (int)score, textStyle);
     }
 
+    void drawGameOver()
+    {
+        drawIntro();
+    }
+
+    bool isTouchingPlane(Ball ball)
+    {
+        Bounds bounds = ball.GetComponent<Renderer>().bounds;
+        float ballMinX = bounds.min.x;
+        float ballMaxX = bounds.max.x;
+        float ballMinZ = bounds.min.z;
+        float ballMaxZ = bounds.max.z;
+
+        float diameter = ballMaxX - ballMinX;
+     
+        return (ballMinZ + diameter) >= minZ && (ballMinX + diameter) >= minX && (ballMaxX - diameter) <= maxX && (ballMaxZ - diameter) <= maxZ;
+    }
     void updatePlaying(float t)
     {
         score += t * 4;

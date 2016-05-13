@@ -123,4 +123,9 @@ public class Control : MonoBehaviour {
     {
         return on;
     }
+
+    public void turnOff()
+    {
+        on = false;
+    }
 }
