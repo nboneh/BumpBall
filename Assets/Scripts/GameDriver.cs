@@ -21,6 +21,7 @@ public class GameDriver : MonoBehaviour {
     public Control controller;
     public Ball playerBall;
     public GameObject plane;
+    public GameObject particleCollision;
 
     TextAsset localScoreText;
     string localScoreFileName = "score.txt";
@@ -169,7 +170,7 @@ public class GameDriver : MonoBehaviour {
                 }
 
                 if (timeToGenerateBall > .4f )
-                    timeToGenerateBall -= .01f;
+                    timeToGenerateBall -= .03f;
 
             }
 
@@ -258,21 +259,25 @@ public class GameDriver : MonoBehaviour {
     void Reset()
     {
         resetEnemyBalls();
+        Destroy(playerBall.gameObject);
         index = Random.Range(0, planeMaterials.Length);
         plane.GetComponent<Renderer>().material = planeMaterials[index];
-        Destroy(playerBall.gameObject);
-        Destroy(playerBall);
+        Invoke("createPlayerBall", .01f);
+
+    }
+
+    void createPlayerBall()
+    {
         playerBall = (Ball)Instantiate(balls[index], new Vector3(0, 1, 0), Quaternion.identity);
         if (index == 4)
             playerBall.GetComponent<Renderer>().materials[1].color = playerColor;
         else
             playerBall.GetComponent<Renderer>().material.color = playerColor;
-
     }
 
     void generateEnemyBall()
     {
-        float radius = Random.Range(0.5f, 2);
+        float radius = Random.Range(0.75f, 2);
         int side =(int)(Random.Range(0, 4));
             
         float x =0;
@@ -322,7 +327,7 @@ public class GameDriver : MonoBehaviour {
         ball.SetDensity(500);
 
         enemyballs.Add(ball);
-        float velocityMag = Random.Range(8,14);
+        float velocityMag = Random.Range(10,16);
         float angle = getAngle(centerX, x, centerZ, z) + Random.Range(-0.175f,0.175f);
 
         Vector3 velocity = new Vector3();

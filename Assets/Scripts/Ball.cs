@@ -13,11 +13,14 @@ public class Ball : MonoBehaviour {
     private float timeUntilCollideAgain = 0.0f;
 
     private AudioSource source;
+
+    ArrayList particleCollisions; 
     // Use this for initialization
     void Start () {
         radius = this.transform.localScale.x/2.0f;
         source = GetComponent<AudioSource>();
         stretchFactor = 0.0f;
+        particleCollisions = new ArrayList();
     }
 
     void FixedUpdate()
@@ -116,8 +119,9 @@ public class Ball : MonoBehaviour {
         particleEffect.startSpeed = collision.relativeVelocity.magnitude / 10.0f;
         ParticleSystem.ShapeModule shape = particleEffect.shape;
         shape.radius = radius / 4.0f;
+        particleCollisions.Add(particleEffect);
 
-        
+
 
 
         timeUntilCollideAgain = 0.5f;
@@ -138,5 +142,13 @@ public class Ball : MonoBehaviour {
         float dist = Vector3.Distance(new Vector3(x2, 0, z2), new Vector3(x1, 0, z1));
 
         return dist <= addedRadius;
+    }
+
+    void OnDestroy()
+    {
+        foreach(ParticleSystem particleCollision in particleCollisions) {
+            if(particleCollision != null)
+              Destroy(particleCollision.gameObject);
+        }
     }
 }
