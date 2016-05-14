@@ -15,8 +15,7 @@ public class Ball : MonoBehaviour {
     private AudioSource source;
     // Use this for initialization
     void Start () {
-        radius = this.transform.localScale.x;
-        Rigidbody rb = GetComponent<Rigidbody>();
+        radius = this.transform.localScale.x/2.0f;
         source = GetComponent<AudioSource>();
         stretchFactor = 0.0f;
     }
@@ -26,6 +25,19 @@ public class Ball : MonoBehaviour {
         float t = Time.deltaTime;
         UpdateColision(t);
 
+    }
+
+    public void SetRadius(float _radius)
+    {
+        radius = _radius;
+        Rigidbody rb = GetComponent<Rigidbody>();
+        rb.transform.localScale = new Vector3(radius*2.0f, radius*2.0f,radius*2.0f);
+    }
+
+    public void SetDensity(int density)
+    {
+       Rigidbody rb = GetComponent<Rigidbody>();
+        rb.mass = radius * density;
     }
 
     public float GetRadius()
@@ -50,9 +62,9 @@ public class Ball : MonoBehaviour {
         float vely = (Vector3.Dot(up, vel) / 40.0f) * stretchFactor;
         float velz =( Vector3.Dot(forward, vel) / 40.0f) * stretchFactor;
 
-        float stretchX = radius - velx + vely / 2.0f + velz / 2.0f;
-        float stretchY = radius + velx / 2.0f - vely + velz / 2.0f;
-        float stretchZ = radius + velx / 2.0f + vely / 2.0f - velz;
+        float stretchX = radius*2.0f - velx + vely / 2.0f + velz / 2.0f;
+        float stretchY = radius*2.0f + velx / 2.0f - vely + velz / 2.0f;
+        float stretchZ = radius*2.0f + velx / 2.0f + vely / 2.0f - velz;
 
         rb.transform.localScale = new Vector3(stretchX,stretchY,stretchZ);
 
@@ -105,12 +117,26 @@ public class Ball : MonoBehaviour {
         ParticleSystem.ShapeModule shape = particleEffect.shape;
         shape.radius = radius / 4.0f;
 
+        
+
 
         timeUntilCollideAgain = 0.5f;
         prevCollidedGameObject = collision.gameObject;
-        source.PlayOneShot(bouncesound, (collision.relativeVelocity.magnitude * collision.relativeVelocity.magnitude) / 1000.0f);
+        source.PlayOneShot(bouncesound, (collision.relativeVelocity.magnitude * collision.relativeVelocity.magnitude) / 50.0f);
         stretchFactor = 4.0f;
 
         Destroy(particleEffect.gameObject, particleCollision.duration);
+    }
+
+    public bool isTouchingBall(float radius1, float x1, float z1)
+    {
+        float addedRadius = radius1 + radius;
+
+        float x2 = GetComponent<Rigidbody>().transform.position.x;
+        float z2 = GetComponent<Rigidbody>().transform.position.z;
+
+        float dist = Vector3.Distance(new Vector3(x2, 0, z2), new Vector3(x1, 0, z1));
+
+        return dist <= addedRadius;
     }
 }

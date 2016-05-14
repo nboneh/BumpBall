@@ -16,6 +16,8 @@ public class GameDriver : MonoBehaviour {
 
     int localHighScore = 0;
 
+    int index = 0;
+
     public Control controller;
     public Ball playerBall;
     public GameObject plane;
@@ -23,8 +25,8 @@ public class GameDriver : MonoBehaviour {
     TextAsset localScoreText;
     string localScoreFileName = "score.txt";
 
-    Color playerColor = new Color(.7f, 0, 0);
-    Color enemyColor = new Color(0, 0, .7f);
+    Color playerColor = new Color(1f, 0, 0);
+    Color enemyColor = new Color(0, 0, 1f);
 
     bool drawScoreIntro = false;
 
@@ -32,38 +34,64 @@ public class GameDriver : MonoBehaviour {
     float maxX;
     float minZ;
     float maxZ;
+    float centerX;
+    float centerZ;
 
     public Material[] planeMaterials;
     public Ball[] balls;
-    
+
+    ArrayList enemyballs;
+
+    float timeToGenerateBall;
+    float timeToGenerateBallCounter;
 
     void Start()
     {
         currentState = GameState.Intro;
         prevState = GameState.NoState;
-      
-        Bounds bounds = plane.GetComponent<Renderer>().bounds;
+
+        Bounds bounds = plane.GetComponent<Collider>().bounds;
         minX = bounds.min.x;
         maxX = bounds.max.x;
         minZ = bounds.min.z;
         maxZ = bounds.max.z;
 
-        if (File.Exists( localScoreFileName))
+        centerX = (maxX + minX) / 2.0f;
+        centerZ = (maxZ + minZ) / 2.0f;
+
+        if (File.Exists(localScoreFileName))
         {
             StreamReader reader = new StreamReader(localScoreFileName); // Does this work?
             localHighScore = int.Parse(reader.ReadLine());
             reader.Close();
         }
         playerBall.GetComponent<Renderer>().material.color = playerColor;
+
+        enemyballs = new ArrayList();
+        resetEnemyBalls();
     }
+
+    void resetEnemyBalls()
+    {
+        for (int i = enemyballs.Count - 1; i >= 0; i--)
+        {
+            Ball ball = (Ball)enemyballs[i];
+            Destroy(ball.gameObject);
+            Destroy(ball);
+        }
+        enemyballs.Clear();
+        timeToGenerateBall = 1.5f;
+        timeToGenerateBallCounter = timeToGenerateBall - .5f;
+    }
+
     void OnGUI()
     {
 
         setAlpha();
         switch (currentState) {
             case GameState.Intro:
-                 drawIntro();
-                 break;
+                drawIntro();
+                break;
             case GameState.Playing:
                 drawScore();
                 break;
@@ -93,7 +121,7 @@ public class GameDriver : MonoBehaviour {
     {
         if (controller.isOn())
         {
-            if(currentState == GameState.Intro)
+            if (currentState == GameState.Intro)
             {
                 score = 0;
                 setState(GameState.Playing);
@@ -102,20 +130,49 @@ public class GameDriver : MonoBehaviour {
     }
     void FixedUpdate()
     {
-       float t = Time.deltaTime;
-       if (alpha < 1.0f)
-       {
-            alpha += t * 4 ;
-            if(alpha > 1.0f)
+        float t = Time.deltaTime;
+        if (alpha < 1.0f)
+        {
+            alpha += t * 4;
+            if (alpha > 1.0f)
             {
                 alpha = 1.0f;
             }
-       }
+        }
 
         if (currentState == GameState.Playing)
         {
             updatePlaying(t);
             playerBall.updateAcceleration(controller.getAcceleration(), t);
+            timeToGenerateBallCounter += t;
+
+
+            for (int i = enemyballs.Count - 1; i >= 0; i--)
+            {
+                Ball ball = (Ball)enemyballs[i];
+                if (!isTouchingPlane(ball))
+                {
+                    Destroy(ball.gameObject);
+                    enemyballs.Remove(ball);
+                }
+            }
+
+
+            if (timeToGenerateBallCounter >= timeToGenerateBall)
+            {
+                timeToGenerateBallCounter -= timeToGenerateBall;
+                int numberOfBallsToGenerate = (int)Random.Range(1, 4);
+
+                for(int i = 0; i < numberOfBallsToGenerate; i++)
+                {
+                    generateEnemyBall();
+                }
+
+                if (timeToGenerateBall > .4f )
+                    timeToGenerateBall -= .01f;
+
+            }
+
             if (!isTouchingPlane(playerBall))
             {
                 controller.turnOff();
@@ -126,7 +183,7 @@ public class GameDriver : MonoBehaviour {
                 setState(GameState.Intro);
             }
         }
-    } 
+    }
 
     void setAlpha()
     {
@@ -152,7 +209,7 @@ public class GameDriver : MonoBehaviour {
         DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 100, 600, 50), "Use a joystick by placing your finger anywhere", textStyle);
         if (drawScoreIntro)
         {
-            DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 +50, 600, 50), "Score: " + (int)finalscore, textStyle);
+            DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 50, 600, 50), "Score: " + (int)finalscore, textStyle);
         }
         DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 100, 600, 50), "Local Highscore: " + localHighScore, textStyle);
         DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 150, 600, 50), "Online Highscore: 500 Mr. Krabs", textStyle);
@@ -174,16 +231,13 @@ public class GameDriver : MonoBehaviour {
 
     bool isTouchingPlane(Ball ball)
     {
-        Bounds bounds = ball.GetComponent<Renderer>().bounds;
-        float ballMinX = bounds.min.x;
-        float ballMaxX = bounds.max.x;
-        float ballMinZ = bounds.min.z;
-        float ballMaxZ = bounds.max.z;
+        float radius = ball.GetRadius();
+        float x = ball.GetComponent<Rigidbody>().transform.position.x;
+        float z = ball.GetComponent<Rigidbody>().transform.position.z;
 
-        float diameter = ballMaxX - ballMinX;
-
-        return (ballMinZ + diameter) >= minZ && (ballMinX + diameter) >= minX && (ballMaxX - diameter) <= maxX && (ballMaxZ - diameter) <= maxZ;
+        return (z + radius) >= minZ && (x + radius) >= minX && (x - radius) <= maxX && (z - radius) <= maxZ;
     }
+
     void updatePlaying(float t)
     {
         score += t * 4;
@@ -195,7 +249,7 @@ public class GameDriver : MonoBehaviour {
         if (finalscore > localHighScore)
         {
             localHighScore = finalscore;
-            StreamWriter writer = new StreamWriter( localScoreFileName); // Does this work?
+            StreamWriter writer = new StreamWriter(localScoreFileName); // Does this work?
             writer.Write(finalscore);
             writer.Close();
         }
@@ -203,20 +257,87 @@ public class GameDriver : MonoBehaviour {
 
     void Reset()
     {
-        int rand = Random.Range(0, planeMaterials.Length);
-        plane.GetComponent<Renderer>().material = planeMaterials[rand];
-
+        resetEnemyBalls();
+        index = Random.Range(0, planeMaterials.Length);
+        plane.GetComponent<Renderer>().material = planeMaterials[index];
         Destroy(playerBall.gameObject);
-        playerBall = Instantiate(balls[rand]);
-        if(rand == 4)
-             playerBall.GetComponent<Renderer>().materials[1].color = playerColor;
+        Destroy(playerBall);
+        playerBall = (Ball)Instantiate(balls[index], new Vector3(0, 1, 0), Quaternion.identity);
+        if (index == 4)
+            playerBall.GetComponent<Renderer>().materials[1].color = playerColor;
         else
             playerBall.GetComponent<Renderer>().material.color = playerColor;
-        playerBall.transform.position = new Vector3(0, 1, 0);
 
     }
 
-    public static void DrawOutline(Rect position,  string text, GUIStyle style)
+    void generateEnemyBall()
+    {
+        float radius = Random.Range(0.5f, 2);
+        int side =(int)(Random.Range(0, 4));
+            
+        float x =0;
+        float z = 0;
+
+        float minXGen = minX - radius;
+        float minZGen = minZ - radius;
+        float maxXGen = maxX + radius;
+        float maxZGen = maxZ + radius;
+
+        switch (side)
+        {
+            case 0:
+                x = Random.Range(minXGen, maxXGen);
+                z = minZGen;
+                break;
+            case 1:
+                x = minXGen;
+                z = Random.Range(minZGen, maxZGen);
+                break;
+            case 2:
+                x = Random.Range(minXGen, maxXGen);
+                z = maxZGen;
+                break;
+            case 3:
+                x = maxXGen;
+                z = Random.Range(minZGen, maxZGen);
+                break;
+        }
+
+        for (int i = enemyballs.Count - 1; i >= 0; i--)
+        {
+            Ball enemyball = (Ball)enemyballs[i];
+            if (enemyball.isTouchingBall(radius,x,z))
+            {
+                return;
+            }
+        }
+
+        Ball ball = (Ball)Instantiate(balls[index], new Vector3(x, radius, z), Quaternion.identity);
+        if (index == 4)
+            ball.GetComponent<Renderer>().materials[1].color = enemyColor;
+        else
+            ball.GetComponent<Renderer>().material.color = enemyColor;
+
+        ball.SetRadius(radius);
+        ball.SetDensity(500);
+
+        enemyballs.Add(ball);
+        float velocityMag = Random.Range(8,14);
+        float angle = getAngle(centerX, x, centerZ, z) + Random.Range(-0.175f,0.175f);
+
+        Vector3 velocity = new Vector3();
+        velocity.x = velocityMag * Mathf.Cos(angle);
+        velocity.y = 0;
+        velocity.z = velocityMag * Mathf.Sin(angle) ;
+
+        ball.GetComponent<Rigidbody>().velocity = velocity;
+
+        ball.enabled = true;
+
+
+    }
+
+    void DrawOutline(Rect position,  string text, GUIStyle style)
     {
         var outColor = Color.black;
         var backupStyle = style;
@@ -235,5 +356,10 @@ public class GameDriver : MonoBehaviour {
         style.normal.textColor = oldColor;
         GUI.Label(position, text, style);
         style = backupStyle;
+    }
+
+    float getAngle(float x1, float x2, float z1, float z2)
+    {
+        return Mathf.Atan2(z1 - z2, x1 - x2);
     }
 }
