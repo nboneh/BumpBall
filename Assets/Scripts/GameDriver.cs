@@ -231,14 +231,14 @@ public class GameDriver : MonoBehaviour
             if (timeToGenerateBallCounter >= timeToGenerateBall)
             {
                 timeToGenerateBallCounter -= timeToGenerateBall;
-                int numberOfBallsToGenerate = (int)Random.Range(1, 5);
+                int numberOfBallsToGenerate = (int)Random.Range(1, 4);
 
                 for (int i = 0; i < numberOfBallsToGenerate; i++)
                 {
                     generateEnemyBall();
                 }
 
-                if (timeToGenerateBall > .4f)
+                if (timeToGenerateBall > .7f)
                     timeToGenerateBall -= .02f;
 
             }
@@ -525,7 +525,7 @@ public class GameDriver : MonoBehaviour
         ball.SetDensity(5);
 
         enemyballs.Add(ball);
-        float velocityMag = Random.Range(8, 16);
+        float velocityMag = Random.Range(5, 13);
         float angle = getAngle(centerX, x, centerZ, z) + Random.Range(-0.175f, 0.175f);
 
         Vector3 velocity = new Vector3();
