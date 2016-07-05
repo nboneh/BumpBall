@@ -12,9 +12,20 @@ public class Control : MonoBehaviour {
     
 	// Use this for initialization
 	void Start () {
-        maxMoveRadius = (pad.transform.localScale.x * pad.rectTransform.rect.width)/2.0f;
+        resize();
         updateAlpha();
 	}
+
+    void resize()
+    {
+        float scalePad = (Mathf.Min(Screen.width,Screen.height)/600.0f);
+        float stickScale = scalePad * (2 / 3.0f);
+        pad.rectTransform.localScale = new Vector3(scalePad, scalePad, scalePad);
+        stick.rectTransform.localScale = new Vector3(stickScale, stickScale, stickScale);
+
+
+        maxMoveRadius = (pad.transform.localScale.x * pad.rectTransform.rect.width) / 2.0f;
+    }
 
     void Update()
     {
@@ -109,12 +120,12 @@ public class Control : MonoBehaviour {
         Vector3 padPos = pad.rectTransform.position;
         Vector3 stickPos = stick.rectTransform.position;
         float angle = getAngle(stickPos, padPos);
-        float radius = (Vector3.Distance(stickPos, padPos));
+        float radius = (Vector3.Distance(stickPos, padPos))/ maxMoveRadius * 8;
 
         Vector3 acceleration = new Vector3();
-        acceleration.x = radius * Mathf.Cos(angle)/12;
+        acceleration.x = radius * Mathf.Cos(angle);
         acceleration.y = 0;
-        acceleration.z = radius * Mathf.Sin(angle)/12 ;
+        acceleration.z = radius * Mathf.Sin(angle) ;
 
         return acceleration;
     }

@@ -2,7 +2,15 @@
 using UnityEngine;
 using System.Collections;
 
-public class GameDriver : MonoBehaviour {
+public class GameDriver : MonoBehaviour
+{
+
+
+    public class Highscore
+    {
+        public int score;
+        public string name;
+    }
 
     enum GameState { Intro, Playing, Highscore, NoState };
     GameState currentState;
@@ -16,14 +24,27 @@ public class GameDriver : MonoBehaviour {
 
     int localHighScore = 0;
 
+    int onlineHighScore = -1;
+    string onlineHighScoreName = "";
+    string inputname = "";
+    int numOfDots = 3;
+
+    bool sending = false;
+    bool failedToSend = false;
+
+    float timerForDotChange = 0;
+    float timeTillChangeDot = .5f;
+
     int index = 0;
 
     public Control controller;
     public Ball playerBall;
     public GameObject plane;
-    public GameObject particleCollision;
+    public Font font;
 
     TextAsset localScoreText;
+
+    string saveFileLocation;
     string localScoreFileName = "score.txt";
 
     Color playerColor = new Color(1f, 0, 0);
@@ -48,6 +69,7 @@ public class GameDriver : MonoBehaviour {
 
     void Start()
     {
+        saveFileLocation = Application.persistentDataPath;
         currentState = GameState.Intro;
         prevState = GameState.NoState;
 
@@ -60,9 +82,9 @@ public class GameDriver : MonoBehaviour {
         centerX = (maxX + minX) / 2.0f;
         centerZ = (maxZ + minZ) / 2.0f;
 
-        if (File.Exists(localScoreFileName))
+        if (File.Exists(saveFileLocation + "/" + localScoreFileName))
         {
-            StreamReader reader = new StreamReader(localScoreFileName); // Does this work?
+            StreamReader reader = new StreamReader(saveFileLocation + "/" + localScoreFileName); // Does this work?
             localHighScore = int.Parse(reader.ReadLine());
             reader.Close();
         }
@@ -70,6 +92,31 @@ public class GameDriver : MonoBehaviour {
 
         enemyballs = new ArrayList();
         resetEnemyBalls();
+        startRequestForOnlineHighScore();
+    }
+
+    void startRequestForOnlineHighScore()
+    {
+        string url = "https://bumpballscores.appspot.com/highscore";
+        WWW www = new WWW(url);
+        StartCoroutine(WaitForRequest(www));
+    }
+
+    IEnumerator WaitForRequest(WWW www)
+    {
+        yield return www;
+
+        // check for errors
+        if (www.error == null)
+        {
+            Highscore highscore = JsonUtility.FromJson<Highscore>(www.text);
+            onlineHighScore = highscore.score;
+            onlineHighScoreName = highscore.name;
+        }
+        else
+        {
+            onlineHighScore = -2;
+        }
     }
 
     void resetEnemyBalls()
@@ -81,7 +128,7 @@ public class GameDriver : MonoBehaviour {
             Destroy(ball);
         }
         enemyballs.Clear();
-        timeToGenerateBall = 1.5f;
+        timeToGenerateBall = 1.8f;
         timeToGenerateBallCounter = timeToGenerateBall - .5f;
     }
 
@@ -89,12 +136,16 @@ public class GameDriver : MonoBehaviour {
     {
 
         setAlpha();
-        switch (currentState) {
+        switch (currentState)
+        {
             case GameState.Intro:
                 drawIntro();
                 break;
             case GameState.Playing:
                 drawScore();
+                break;
+            case GameState.Highscore:
+                drawHighscore();
                 break;
         }
         if (alpha == 1.0f || prevState == GameState.NoState)
@@ -107,6 +158,9 @@ public class GameDriver : MonoBehaviour {
                 break;
             case GameState.Playing:
                 drawScore();
+                break;
+            case GameState.Highscore:
+                drawHighscore();
                 break;
         }
     }
@@ -141,6 +195,20 @@ public class GameDriver : MonoBehaviour {
             }
         }
 
+        if ((currentState == GameState.Intro && onlineHighScore == -1) || sending)
+        {
+            timerForDotChange += t;
+            if (timerForDotChange >= timeTillChangeDot)
+            {
+                timerForDotChange -= timeTillChangeDot;
+                numOfDots++;
+                if (numOfDots > 3)
+                {
+                    numOfDots = 0;
+                }
+            }
+        }
+
         if (currentState == GameState.Playing)
         {
             updatePlaying(t);
@@ -162,15 +230,15 @@ public class GameDriver : MonoBehaviour {
             if (timeToGenerateBallCounter >= timeToGenerateBall)
             {
                 timeToGenerateBallCounter -= timeToGenerateBall;
-                int numberOfBallsToGenerate = (int)Random.Range(1, 4);
+                int numberOfBallsToGenerate = (int)Random.Range(1, 5);
 
-                for(int i = 0; i < numberOfBallsToGenerate; i++)
+                for (int i = 0; i < numberOfBallsToGenerate; i++)
                 {
                     generateEnemyBall();
                 }
 
-                if (timeToGenerateBall > .4f )
-                    timeToGenerateBall -= .03f;
+                if (timeToGenerateBall > .4f)
+                    timeToGenerateBall -= .02f;
 
             }
 
@@ -181,7 +249,16 @@ public class GameDriver : MonoBehaviour {
                 drawScoreIntro = true;
                 CheckLocalHighScore();
                 Reset();
-                setState(GameState.Intro);
+
+                if (finalscore > onlineHighScore && onlineHighScore >= 0)
+                {
+                    setState(GameState.Highscore);
+                }
+                else
+                {
+                    setState(GameState.Intro);
+                    startRequestForOnlineHighScore();
+                }
             }
         }
     }
@@ -204,31 +281,151 @@ public class GameDriver : MonoBehaviour {
     {
         GUIStyle textStyle = GUI.skin.GetStyle("Label");
         textStyle.alignment = TextAnchor.UpperCenter;
-        textStyle.fontSize = 26;
+        textStyle.normal.textColor = Color.white;
+        int fontSize = getFontSize();
+        textStyle.fontSize = fontSize;
+        textStyle.font = font;
+
+        float width = fontSize * 36;
+        float height = fontSize * 2;
+        float relativeHeight = Screen.height / 15;
         textStyle.fontStyle = FontStyle.Bold;
-        DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 150, 600, 50), "Help the redball stay inside the screen", textStyle);
-        DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 100, 600, 50), "Use a joystick by placing your finger anywhere", textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 3, width, height), "Help the red ball stay inside the screen", textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 2, width, height), "Use a joystick by placing your finger anywhere", textStyle);
         if (drawScoreIntro)
         {
-            DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 50, 600, 50), "Score: " + (int)finalscore, textStyle);
+            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight, width, height), "Score: " + (int)finalscore, textStyle);
         }
-        DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 100, 600, 50), "Local Highscore: " + localHighScore, textStyle);
-        DrawOutline(new Rect(Screen.width / 2 - 300, Screen.height / 2 + 150, 600, 50), "Online Highscore: 500 Mr. Krabs", textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 2, width, height), "Local Highscore: " + localHighScore, textStyle);
+        if (onlineHighScore == -1)
+        {
+            string text = "Loading Online Highscore";
+            for (int i = 0; i < numOfDots; i++)
+            {
+                text += ".";
+            }
+            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 3, width, height), text, textStyle);
+        }
+        else if (onlineHighScore == -2)
+        {
+            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 3, width, height), "Error Loading Online Highscore", textStyle);
+        }
+        else
+        {
+            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 3, width, height), "Online Highscore: " + onlineHighScore + " " + onlineHighScoreName, textStyle);
+        }
     }
 
     void drawScore()
     {
         GUIStyle textStyle = GUI.skin.GetStyle("Label");
+        textStyle.normal.textColor = Color.white;
         textStyle.alignment = TextAnchor.MiddleLeft;
-        textStyle.fontSize = 26;
+        int fontSize = getFontSize();
+        textStyle.fontSize = fontSize;
+        float width = fontSize * 20;
+        float height = fontSize * 2;
         textStyle.fontStyle = FontStyle.Bold;
-        DrawOutline(new Rect(20, 20, 600, 50), "Score: " + (int)score, textStyle);
+        textStyle.font = font;
+        DrawOutline(new Rect(Screen.width / 40.0f, Screen.height / 40.0f, width, height), "Score: " + (int)score, textStyle);
     }
 
-    void drawGameOver()
+
+    void drawHighscore()
     {
-        drawIntro();
+        controller.turnOff();
+        GUIStyle textStyle = GUI.skin.GetStyle("Label");
+        textStyle.normal.textColor = Color.white;
+        textStyle.alignment = TextAnchor.UpperCenter;
+        int fontSize = getFontSize();
+        textStyle.fontSize = fontSize;
+        textStyle.font = font;
+
+        float width = fontSize * 36;
+        float height = fontSize * 2;
+        float relativeHeight = Screen.height / 15;
+        textStyle.fontStyle = FontStyle.Bold;
+        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 6, width, height), "Congratulations! You made the online highscore!", textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 5, width, height), "Your score was " + finalscore + ", enter your name below", textStyle);
+        if (sending)
+        {
+            string text = "Sending Online Highscore";
+            for (int i = 0; i < numOfDots; i++)
+            {
+                text += ".";
+            }
+            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 4, width, height), text, textStyle);
+        }
+        else
+        {
+            GUIStyle textFieldStyle = GUI.skin.GetStyle("TextField");
+            textFieldStyle.fontSize = fontSize;
+            textFieldStyle.font = font;
+
+            float textFieldwidth = fontSize * 13;
+            float textFieldHeight = fontSize * 1.5f;
+            inputname = GUI.TextField(new Rect(Screen.width / 2 - textFieldwidth / 2, Screen.height / 2 - relativeHeight * 3.8f, textFieldwidth, textFieldHeight), inputname, textFieldStyle);
+            if (inputname.Length >= 12)
+            {
+                inputname = inputname.Substring(0, 12);
+            }
+            GUIStyle buttonStyle = GUI.skin.GetStyle("Button");
+            buttonStyle.fontSize = fontSize;
+            buttonStyle.font = font;
+            float buttonWidth = fontSize * 7;
+            bool clicked = GUI.Button(new Rect(Screen.width / 2 - buttonWidth / 2, Screen.height / 2 - relativeHeight * 2.6f, buttonWidth, height), "Submit", buttonStyle);
+            if (clicked)
+            {
+                sendOnlineHighScore();
+            }
+        }
+        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 2, width, height), "Note: Your score will be deleted in one week", textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 3, width, height), "or if someone else gets a higher score", textStyle);
+
+        if (failedToSend)
+        {
+            textStyle.normal.textColor = Color.red;
+            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 4, width, height), "Failed to send please try again", textStyle);
+        }
     }
+
+    void sendOnlineHighScore()
+    {
+        sending = true;
+        string url = "https://bumpballscores.appspot.com/highscore";
+        WWWForm form = new WWWForm();
+        form.AddField("name", inputname);
+        form.AddField("pass", "");
+        form.AddField("score", finalscore);
+
+        WWW www = new WWW(url, form);
+        StartCoroutine(Send(www));
+    }
+    
+    IEnumerator Send(WWW www)
+    {
+        yield return www;
+        sending = false;
+        // check for errors
+        if (www.error == null)
+        {
+            onlineHighScore = -1;
+            setState(GameState.Intro);
+            startRequestForOnlineHighScore();
+        }
+        else
+        {
+            failedToSend = true;
+        }
+    }
+    int getFontSize()
+    {
+        int fontSize = (int)(48.0f * (float)(Screen.width) / 1920.0f); //scale size font;
+        if (fontSize < 14)
+            fontSize = 14;
+        return fontSize;
+    }
+
 
     bool isTouchingPlane(Ball ball)
     {
@@ -250,7 +447,7 @@ public class GameDriver : MonoBehaviour {
         if (finalscore > localHighScore)
         {
             localHighScore = finalscore;
-            StreamWriter writer = new StreamWriter(localScoreFileName); // Does this work?
+            StreamWriter writer = new StreamWriter(saveFileLocation + "/" + localScoreFileName); // Does this work?
             writer.Write(finalscore);
             writer.Close();
         }
@@ -268,7 +465,7 @@ public class GameDriver : MonoBehaviour {
 
     void createPlayerBall()
     {
-        playerBall = (Ball)Instantiate(balls[index], new Vector3(0, 1, 0), Quaternion.identity);
+        playerBall = (Ball)Instantiate(balls[index], new Vector3(0, .98f, 0), Quaternion.identity);
         if (index == 4)
             playerBall.GetComponent<Renderer>().materials[1].color = playerColor;
         else
@@ -277,10 +474,10 @@ public class GameDriver : MonoBehaviour {
 
     void generateEnemyBall()
     {
-        float radius = Random.Range(0.75f, 2);
-        int side =(int)(Random.Range(0, 4));
-            
-        float x =0;
+        float radius = Random.Range(0.65f, 1.65f);
+        int side = (int)(Random.Range(0, 4));
+
+        float x = 0;
         float z = 0;
 
         float minXGen = minX - radius;
@@ -311,38 +508,39 @@ public class GameDriver : MonoBehaviour {
         for (int i = enemyballs.Count - 1; i >= 0; i--)
         {
             Ball enemyball = (Ball)enemyballs[i];
-            if (enemyball.isTouchingBall(radius,x,z))
+            if (enemyball.isTouchingBall(radius + 2, x, z))
             {
                 return;
             }
         }
 
-        Ball ball = (Ball)Instantiate(balls[index], new Vector3(x, radius, z), Quaternion.identity);
+        Ball ball = (Ball)Instantiate(balls[index], new Vector3(x, radius - .02f, z), Quaternion.identity);
         if (index == 4)
             ball.GetComponent<Renderer>().materials[1].color = enemyColor;
         else
             ball.GetComponent<Renderer>().material.color = enemyColor;
 
         ball.SetRadius(radius);
-        ball.SetDensity(500);
+        ball.SetDensity(5);
 
         enemyballs.Add(ball);
-        float velocityMag = Random.Range(10,16);
-        float angle = getAngle(centerX, x, centerZ, z) + Random.Range(-0.175f,0.175f);
+        float velocityMag = Random.Range(8, 16);
+        float angle = getAngle(centerX, x, centerZ, z) + Random.Range(-0.175f, 0.175f);
 
         Vector3 velocity = new Vector3();
         velocity.x = velocityMag * Mathf.Cos(angle);
         velocity.y = 0;
-        velocity.z = velocityMag * Mathf.Sin(angle) ;
+        velocity.z = velocityMag * Mathf.Sin(angle);
 
         ball.GetComponent<Rigidbody>().velocity = velocity;
+        ball.GetComponent<Rigidbody>().transform.localEulerAngles = new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360));
 
         ball.enabled = true;
 
 
     }
 
-    void DrawOutline(Rect position,  string text, GUIStyle style)
+    void DrawOutline(Rect position, string text, GUIStyle style)
     {
         var outColor = Color.black;
         var backupStyle = style;
@@ -367,4 +565,6 @@ public class GameDriver : MonoBehaviour {
     {
         return Mathf.Atan2(z1 - z2, x1 - x2);
     }
+
+
 }

@@ -89,15 +89,17 @@ public class Ball : MonoBehaviour {
             }
         }
 
+
+
     }
 
     public void updateAcceleration(Vector3 acceleration, float t)
     {
         Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb.velocity.magnitude < 7.0f)
+        if (rb.velocity.magnitude < 10.0f)
             rb.velocity = new Vector3(acceleration.x, rb.velocity.y, acceleration.z);
         else
-            rb.velocity = new Vector3(rb.velocity.x + (acceleration.x * t), rb.velocity.y, rb.velocity.z + (acceleration.z * t));
+            rb.velocity = rb.velocity = new Vector3(rb.velocity.x + (acceleration.x * t * 2), rb.velocity.y, rb.velocity.z + (acceleration.z * t * 2));
     }
     void OnCollisionEnter(Collision collision)
     {
@@ -120,9 +122,6 @@ public class Ball : MonoBehaviour {
         ParticleSystem.ShapeModule shape = particleEffect.shape;
         shape.radius = radius / 4.0f;
         particleCollisions.Add(particleEffect);
-
-
-
 
         timeUntilCollideAgain = 0.5f;
         prevCollidedGameObject = collision.gameObject;
