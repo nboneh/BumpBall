@@ -134,7 +134,6 @@ public class GameDriver : MonoBehaviour
 
     void OnGUI()
     {
-
         setAlpha();
         switch (currentState)
         {
@@ -214,6 +213,7 @@ public class GameDriver : MonoBehaviour
             updatePlaying(t);
             playerBall.updateAcceleration(controller.getAcceleration(), t);
             timeToGenerateBallCounter += t;
+ 
 
 
             for (int i = enemyballs.Count - 1; i >= 0; i--)
@@ -224,6 +224,7 @@ public class GameDriver : MonoBehaviour
                     Destroy(ball.gameObject);
                     enemyballs.Remove(ball);
                 }
+
             }
 
 
@@ -242,7 +243,7 @@ public class GameDriver : MonoBehaviour
 
             }
 
-            if (!isTouchingPlane(playerBall))
+            if (!isTouchingPlane(playerBall) || playerBall.WasHit())
             {
                 controller.turnOff();
                 finalscore = (int)score;
@@ -290,7 +291,7 @@ public class GameDriver : MonoBehaviour
         float height = fontSize * 2;
         float relativeHeight = Screen.height / 15;
         textStyle.fontStyle = FontStyle.Bold;
-        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 3, width, height), "Help the red ball stay inside the screen", textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 3, width, height), "Dodge the blue balls!", textStyle);
         DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 2, width, height), "Use a joystick by placing your finger anywhere", textStyle);
         if (drawScoreIntro)
         {

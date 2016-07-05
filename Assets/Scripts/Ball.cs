@@ -14,6 +14,8 @@ public class Ball : MonoBehaviour {
 
     private AudioSource source;
 
+    bool wasHit = false;
+
     ArrayList particleCollisions; 
     // Use this for initialization
     void Start () {
@@ -30,6 +32,10 @@ public class Ball : MonoBehaviour {
 
     }
 
+    public bool WasHit()
+    {
+        return wasHit;
+    }
     public void SetRadius(float _radius)
     {
         radius = _radius;
@@ -85,6 +91,7 @@ public class Ball : MonoBehaviour {
             timeUntilCollideAgain -= t * 10.0f;
             if (timeUntilCollideAgain < 0.0f)
             {
+                wasHit = true;
                 timeUntilCollideAgain = 0.0f;
             }
         }
@@ -110,7 +117,6 @@ public class Ball : MonoBehaviour {
 
         if (timeUntilCollideAgain > 0.0f && prevCollidedGameObject == collision.gameObject)
             return;
-
 
         ContactPoint contact = collision.contacts[0];
         Quaternion rot = Quaternion.FromToRotation(Vector3.forward, contact.normal);
