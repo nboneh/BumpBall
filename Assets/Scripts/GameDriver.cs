@@ -128,7 +128,7 @@ public class GameDriver : MonoBehaviour
             Destroy(ball);
         }
         enemyballs.Clear();
-        timeToGenerateBall = 1.8f;
+        timeToGenerateBall = 2.2f;
         timeToGenerateBallCounter = timeToGenerateBall - .5f;
     }
 
@@ -231,15 +231,15 @@ public class GameDriver : MonoBehaviour
             if (timeToGenerateBallCounter >= timeToGenerateBall)
             {
                 timeToGenerateBallCounter -= timeToGenerateBall;
-                int numberOfBallsToGenerate = (int)Random.Range(1, 4);
+                int numberOfBallsToGenerate = (int)Random.Range(1, 3);
 
                 for (int i = 0; i < numberOfBallsToGenerate; i++)
                 {
                     generateEnemyBall();
                 }
 
-                if (timeToGenerateBall > .7f)
-                    timeToGenerateBall -= .02f;
+				if (timeToGenerateBall > 1.0f)
+                    timeToGenerateBall -= .03f;
 
             }
 
@@ -458,7 +458,7 @@ public class GameDriver : MonoBehaviour
     {
         resetEnemyBalls();
         Destroy(playerBall.gameObject);
-        index = Random.Range(0, planeMaterials.Length);
+		index = Random.Range(0, planeMaterials.Length);
         plane.GetComponent<Renderer>().material = planeMaterials[index];
         Invoke("createPlayerBall", .01f);
 
@@ -481,11 +481,11 @@ public class GameDriver : MonoBehaviour
         float x = 0;
         float z = 0;
 
-        float minXGen = minX - radius;
-        float minZGen = minZ - radius;
-        float maxXGen = maxX + radius;
-        float maxZGen = maxZ + radius;
-
+		float minXGen = minX + radius/4.0f;
+		float minZGen = minZ +radius/4.0f;
+		float maxXGen = maxX-radius/4.0f;
+		float maxZGen = maxZ-radius/4.0f;
+	
         switch (side)
         {
             case 0:
@@ -515,7 +515,7 @@ public class GameDriver : MonoBehaviour
             }
         }
 
-        Ball ball = (Ball)Instantiate(balls[index], new Vector3(x, radius - .02f, z), Quaternion.identity);
+		Ball ball = (Ball)Instantiate(balls[index], new Vector3(x,  radius- .2f, z), Quaternion.identity);
         if (index == 4)
             ball.GetComponent<Renderer>().materials[1].color = enemyColor;
         else
@@ -533,9 +533,10 @@ public class GameDriver : MonoBehaviour
         velocity.y = 0;
         velocity.z = velocityMag * Mathf.Sin(angle);
 
+		if(index != 3)
+			 ball.GetComponent<Rigidbody> ().transform.localEulerAngles = new Vector3 (Random.Range (0, 360), Random.Range (0, 360), Random.Range (0, 360));
         ball.GetComponent<Rigidbody>().velocity = velocity;
-        ball.GetComponent<Rigidbody>().transform.localEulerAngles = new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360));
-
+     
         ball.enabled = true;
 
 

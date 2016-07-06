@@ -1,7 +1,7 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2015
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bumpball.CSharp", "Bumpball.CSharp.csproj", "{3646179C-8625-237D-792B-CDC4A8562C72}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2008
+
+Project("{3A746968-DDC0-15AF-35CA-AA93789D2DC7}") = "BumpBall", "Assembly-CSharp.csproj", "{12A4178B-6BC1-9249-0865-9D2C63EEFF4E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,12 +9,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3646179C-8625-237D-792B-CDC4A8562C72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3646179C-8625-237D-792B-CDC4A8562C72}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3646179C-8625-237D-792B-CDC4A8562C72}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3646179C-8625-237D-792B-CDC4A8562C72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12A4178B-6BC1-9249-0865-9D2C63EEFF4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12A4178B-6BC1-9249-0865-9D2C63EEFF4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12A4178B-6BC1-9249-0865-9D2C63EEFF4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12A4178B-6BC1-9249-0865-9D2C63EEFF4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Assembly-CSharp.csproj
 	EndGlobalSection
 EndGlobal
