@@ -6,7 +6,8 @@ public class Control : MonoBehaviour {
 
     public Image stick;
     public Image pad;
-    bool on;
+    bool on = false;
+	bool preOn = false;
     float alpha = 0;
     float maxMoveRadius;
     
@@ -34,7 +35,7 @@ public class Control : MonoBehaviour {
             Vector3 mousePos = Input.mousePosition;
             stick.rectTransform.position = mousePos;
             pad.rectTransform.transform.position = mousePos;
-            on = true;
+			preOn = true;
         } else if (Input.GetMouseButton(0))
         {
             Vector3 mousePos = Input.mousePosition;
@@ -49,9 +50,12 @@ public class Control : MonoBehaviour {
             }
             else
                   stick.rectTransform.position = mousePos;
+			if (preOn)
+				on = true;
         } else if (Input.GetMouseButtonUp(0))
         {
             on = false;
+			preOn = false;
         }
     }
 
@@ -138,5 +142,6 @@ public class Control : MonoBehaviour {
     public void turnOff()
     {
         on = false;
+		preOn = false;
     }
 }

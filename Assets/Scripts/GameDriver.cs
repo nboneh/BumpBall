@@ -4,28 +4,34 @@ using System.Collections;
 
 public class GameDriver : MonoBehaviour
 {
+	[System.Serializable]
+	public struct HighScoreList
+	{
+		[System.Serializable]
+		public class Highscore
+		{
+			public string name;
+			public long score;
+		}
+		public Highscore[] array;
+	}
+		
 
-
-    public class Highscore
-    {
-        public int score;
-        public string name;
-    }
-
-    enum GameState { Intro, Playing, Highscore, NoState };
+    enum GameState { Intro, Playing, MadeHighScore, HighScores, NoState };
     GameState currentState;
     GameState prevState;
     GUIStyle textStyle;
 
     float alpha = 0.0f;
     float score = 0;
+	int rank = -1;
 
     int finalscore = 0;
 
     int localHighScore = 0;
 
-    int onlineHighScore = -1;
-    string onlineHighScoreName = "";
+	int onlineHighScoreLoaded = 0;
+	public HighScoreList.Highscore[] highscores;
     string inputname = "";
     int numOfDots = 3;
 
@@ -92,11 +98,12 @@ public class GameDriver : MonoBehaviour
 
         enemyballs = new ArrayList();
         resetEnemyBalls();
-        startRequestForOnlineHighScore();
+		startRequestForOnlineHighScore ();
     }
 
     void startRequestForOnlineHighScore()
     {
+		onlineHighScoreLoaded = 0;
         string url = "https://bumpballscores.appspot.com/highscore";
         WWW www = new WWW(url);
         StartCoroutine(WaitForRequest(www));
@@ -109,13 +116,14 @@ public class GameDriver : MonoBehaviour
         // check for errors
         if (www.error == null)
         {
-            Highscore highscore = JsonUtility.FromJson<Highscore>(www.text);
-            onlineHighScore = highscore.score;
-            onlineHighScoreName = highscore.name;
+			string json = "{ \"array\": " + www.text + "}";
+			HighScoreList list = JsonUtility.FromJson<HighScoreList>(json);
+			highscores = list.array;
+			onlineHighScoreLoaded = 1;
         }
         else
         {
-            onlineHighScore = -2;
+			onlineHighScoreLoaded = -1;
         }
     }
 
@@ -143,12 +151,16 @@ public class GameDriver : MonoBehaviour
             case GameState.Playing:
                 drawScore();
                 break;
-            case GameState.Highscore:
-                drawHighscore();
+            case GameState.MadeHighScore:
+                drawMadeHighscore();
                 break;
+			case GameState.HighScores:
+				drawHighScores ();
+				break;
         }
         if (alpha == 1.0f || prevState == GameState.NoState)
             return;
+	
         setPrevAlpha();
         switch (prevState)
         {
@@ -158,30 +170,24 @@ public class GameDriver : MonoBehaviour
             case GameState.Playing:
                 drawScore();
                 break;
-            case GameState.Highscore:
-                drawHighscore();
+            case GameState.MadeHighScore:
+                drawMadeHighscore();
                 break;
+			case GameState.HighScores:
+				drawHighScores ();
+				break;
         }
     }
 
     void setState(GameState state)
     {
+		if (state == GameState.HighScores)
+			startRequestForOnlineHighScore ();
         prevState = currentState;
         currentState = state;
         alpha = 0;
     }
-
-    void Update()
-    {
-        if (controller.isOn())
-        {
-            if (currentState == GameState.Intro)
-            {
-                score = 0;
-                setState(GameState.Playing);
-            }
-        }
-    }
+		
     void FixedUpdate()
     {
         float t = Time.deltaTime;
@@ -194,7 +200,7 @@ public class GameDriver : MonoBehaviour
             }
         }
 
-        if ((currentState == GameState.Intro && onlineHighScore == -1) || sending)
+		if (onlineHighScoreLoaded == 0|| sending)
         {
             timerForDotChange += t;
             if (timerForDotChange >= timeTillChangeDot)
@@ -251,9 +257,20 @@ public class GameDriver : MonoBehaviour
                 CheckLocalHighScore();
                 Reset();
 
-                if (finalscore > onlineHighScore && onlineHighScore >= 0)
+				rank = 0;
+
+				int i = 1;
+				foreach (HighScoreList.Highscore highscore in highscores){
+					if (finalscore > highscore.score) {
+						rank = i;
+						break;
+					}
+					i++;
+				}
+
+				if (rank > 0)
                 {
-                    setState(GameState.Highscore);
+                    setState(GameState.MadeHighScore);
                 }
                 else
                 {
@@ -291,30 +308,32 @@ public class GameDriver : MonoBehaviour
         float height = fontSize * 2;
         float relativeHeight = Screen.height / 15;
         textStyle.fontStyle = FontStyle.Bold;
-        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 3, width, height), "Dodge the blue balls!", textStyle);
-        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 2, width, height), "Use a joystick by placing your finger anywhere", textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 4f, width, height), "Dodge the blue balls!", textStyle);
+        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 2.7f, width, height), "Use a joystick by placing your finger anywhere", textStyle);
+		float add = 0f;
         if (drawScoreIntro)
         {
-            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight, width, height), "Score: " + (int)finalscore, textStyle);
+			add = 1.3f;
+            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * add , width, height), "Score: " + (int)finalscore, textStyle);
         }
-        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 2, width, height), "Local Highscore: " + localHighScore, textStyle);
-        if (onlineHighScore == -1)
-        {
-            string text = "Loading Online Highscore";
-            for (int i = 0; i < numOfDots; i++)
-            {
-                text += ".";
-            }
-            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 3, width, height), text, textStyle);
-        }
-        else if (onlineHighScore == -2)
-        {
-            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 3, width, height), "Error Loading Online Highscore", textStyle);
-        }
-        else
-        {
-            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 3, width, height), "Online Highscore: " + onlineHighScore + " " + onlineHighScoreName, textStyle);
-        }
+		DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * (1.3f + add), width, height), "Local Highscore: " + localHighScore, textStyle);
+
+		GUIStyle buttonStyle = GUI.skin.GetStyle("Button");
+		buttonStyle.fontSize = fontSize;
+		buttonStyle.font = font;
+		float buttonWidth = fontSize * 15;
+		bool clicked = GUI.RepeatButton(new Rect(Screen.width / 2 - buttonWidth / 2, Screen.height / 2 + relativeHeight *  (2.6f + add), buttonWidth, height), "Online Leaderboard", buttonStyle);
+		if (currentState == GameState.Intro && clicked)
+		{
+			setState(GameState.HighScores);
+			controller.turnOff ();
+			return;
+		}
+		if (currentState == GameState.Intro && controller.isOn())
+		{
+			score = 0;
+			setState(GameState.Playing);
+		}
     }
 
     void drawScore()
@@ -331,8 +350,53 @@ public class GameDriver : MonoBehaviour
         DrawOutline(new Rect(Screen.width / 40.0f, Screen.height / 40.0f, width, height), "Score: " + (int)score, textStyle);
     }
 
+	void drawHighScores(){
+		controller.turnOff();
+		GUIStyle textStyle = GUI.skin.GetStyle("Label");
+		textStyle.normal.textColor = Color.white;
+		textStyle.alignment = TextAnchor.MiddleCenter;
+		int fontSize = getFontSize();
+		textStyle.fontSize = fontSize;
+		textStyle.font = font;
 
-    void drawHighscore()
+		float width = fontSize * 36;
+		float height = fontSize * 2;
+		float relativeHeight = Screen.height / 15;
+		textStyle.fontStyle = FontStyle.Bold;
+		DrawOutline(new Rect(Screen.width / 1.9f - width / 2, Screen.height / 2 - relativeHeight * 7, width, height), "Online Leaderboard", textStyle);
+		if (onlineHighScoreLoaded == 0) {
+			string text = "Loading Online Leaderboards";
+			for (int i = 0; i < numOfDots; i++) {
+				text += ".";
+			}
+			DrawOutline (new Rect (Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight , width, height), text, textStyle);
+		} else if(onlineHighScoreLoaded == 1) {
+			int i = 0;
+			foreach (HighScoreList.Highscore highscore in highscores){
+				textStyle.alignment = TextAnchor.MiddleLeft;
+				float scoreWidth = fontSize * 15;
+				DrawOutline(new Rect(Screen.width / 3 - scoreWidth / 2, Screen.height / 2 - relativeHeight * (6-i*1.1f), scoreWidth, height), (i+1) + ". " + highscore.name, textStyle);
+				textStyle.alignment = TextAnchor.MiddleRight;
+				DrawOutline(new Rect(Screen.width *(2/ 3.0f)- scoreWidth / 2, Screen.height / 2 - relativeHeight * (6-i*1.1f), scoreWidth, height), highscore.score + "", textStyle);
+				i++;
+			}
+		}  else if(onlineHighScoreLoaded == -1) {
+			textStyle.normal.textColor = Color.red;
+			DrawOutline (new Rect (Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight , width, height), "Error Loading Online Leaderboard", textStyle);
+		}
+
+		GUIStyle buttonStyle = GUI.skin.GetStyle("Button");
+		buttonStyle.fontSize = fontSize;
+		buttonStyle.font = font;
+		float buttonWidth = fontSize * 7;
+		bool clicked = GUI.Button(new Rect(Screen.width / 8 - buttonWidth / 2, Screen.height / 2 + relativeHeight * 6f, buttonWidth, height), "Back", buttonStyle);
+		if (clicked)
+		{
+			setState(GameState.Intro);
+		}
+	}
+
+    void drawMadeHighscore()
     {
         controller.turnOff();
         GUIStyle textStyle = GUI.skin.GetStyle("Label");
@@ -346,8 +410,19 @@ public class GameDriver : MonoBehaviour
         float height = fontSize * 2;
         float relativeHeight = Screen.height / 15;
         textStyle.fontStyle = FontStyle.Bold;
-        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 6, width, height), "Congratulations! You made the online highscore!", textStyle);
-        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 5, width, height), "Your score was " + finalscore + ", enter your name below", textStyle);
+		string rankstr = rank + "";
+		if (rank == 1)
+			rankstr += "st";
+		else if (rank == 2)
+			rankstr += "nd";
+		else if (rank == 3)
+			rankstr += "rd";
+		else
+			rankstr += "th";
+		DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 5.1f, width, height), "Congratulations!" , textStyle);
+		DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 3.8f, width, height), "You ranked " + rankstr + " on the online leaderboard" , textStyle);
+
+		DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 2.5f, width, height), "Your score was " + finalscore + ", enter your name below", textStyle);
         if (sending)
         {
             string text = "Sending Online Highscore";
@@ -355,7 +430,7 @@ public class GameDriver : MonoBehaviour
             {
                 text += ".";
             }
-            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 - relativeHeight * 4, width, height), text, textStyle);
+            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 1.5f, width, height), text, textStyle);
         }
         else
         {
@@ -365,7 +440,7 @@ public class GameDriver : MonoBehaviour
 
             float textFieldwidth = fontSize * 13;
             float textFieldHeight = fontSize * 1.5f;
-            inputname = GUI.TextField(new Rect(Screen.width / 2 - textFieldwidth / 2, Screen.height / 2 - relativeHeight * 3.8f, textFieldwidth, textFieldHeight), inputname, textFieldStyle);
+            inputname = GUI.TextField(new Rect(Screen.width / 2 - textFieldwidth / 2, Screen.height / 2 +relativeHeight * 1.5f, textFieldwidth, textFieldHeight), inputname, textFieldStyle);
             if (inputname.Length >= 12)
             {
                 inputname = inputname.Substring(0, 12);
@@ -374,19 +449,16 @@ public class GameDriver : MonoBehaviour
             buttonStyle.fontSize = fontSize;
             buttonStyle.font = font;
             float buttonWidth = fontSize * 7;
-            bool clicked = GUI.Button(new Rect(Screen.width / 2 - buttonWidth / 2, Screen.height / 2 - relativeHeight * 2.6f, buttonWidth, height), "Submit", buttonStyle);
+            bool clicked = GUI.Button(new Rect(Screen.width / 2 - buttonWidth / 2, Screen.height / 2 + relativeHeight * 2.8f, buttonWidth, height), "Submit", buttonStyle);
             if (clicked)
             {
                 sendOnlineHighScore();
             }
         }
-        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 2, width, height), "Note: Your score will be deleted in one week", textStyle);
-        DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 3, width, height), "or if someone else gets a higher score", textStyle);
-
         if (failedToSend)
         {
             textStyle.normal.textColor = Color.red;
-            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 4, width, height), "Failed to send please try again", textStyle);
+            DrawOutline(new Rect(Screen.width / 2 - width / 2, Screen.height / 2 + relativeHeight * 4.1f, width, height), "Failed to send please try again", textStyle);
         }
     }
 
@@ -396,7 +468,7 @@ public class GameDriver : MonoBehaviour
         string url = "https://bumpballscores.appspot.com/highscore";
         WWWForm form = new WWWForm();
         form.AddField("name", inputname);
-        form.AddField("pass", "");
+		form.AddField("pass", "");
         form.AddField("score", finalscore);
 
         WWW www = new WWW(url, form);
@@ -410,7 +482,6 @@ public class GameDriver : MonoBehaviour
         // check for errors
         if (www.error == null)
         {
-            onlineHighScore = -1;
             setState(GameState.Intro);
             startRequestForOnlineHighScore();
         }
@@ -419,6 +490,7 @@ public class GameDriver : MonoBehaviour
             failedToSend = true;
         }
     }
+
     int getFontSize()
     {
         int fontSize = (int)(48.0f * (float)(Screen.width) / 1920.0f); //scale size font;
@@ -481,10 +553,10 @@ public class GameDriver : MonoBehaviour
         float x = 0;
         float z = 0;
 
-		float minXGen = minX + radius/4.0f;
-		float minZGen = minZ +radius/4.0f;
-		float maxXGen = maxX-radius/4.0f;
-		float maxZGen = maxZ-radius/4.0f;
+		float minXGen = minX + radius/3.9f;
+		float minZGen = minZ +radius/3.9f;
+		float maxXGen = maxX-radius/3.9f;
+		float maxZGen = maxZ-radius/3.9f;
 	
         switch (side)
         {

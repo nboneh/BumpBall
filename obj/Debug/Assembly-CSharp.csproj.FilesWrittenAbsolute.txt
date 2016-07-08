@@ -1,0 +1,17 @@
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/Assembly-CSharp.dll.mdb
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/Assembly-CSharp.dll
+/Users/nirboneh/Documents/BumpBall/obj/Debug/Assembly-CSharp.dll
+/Users/nirboneh/Documents/BumpBall/obj/Debug/Assembly-CSharp.dll.mdb
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/UnityEngine.dll
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/UnityEditor.dll
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/UnityEngine.Networking.dll
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/UnityEngine.UI.dll
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/Mono.Cecil.dll
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/Unity.SerializationLogic.dll
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/Unity.DataContract.dll
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/ICSharpCode.NRefactory.dll
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/Unity.UNetWeaver.dll
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/Unity.UNetWeaver.dll.mdb
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/Unity.CecilTools.dll
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/Mono.Cecil.Pdb.dll
+/Users/nirboneh/Documents/BumpBall/Temp/bin/Debug/Mono.Cecil.Mdb.dll
